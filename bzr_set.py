@@ -12,21 +12,25 @@ bzr_repository = {
 # Subscribe here links to modules you are interrested in
 
 bzr_links = {
-	'addons/base_setup': 'server/bin/addons/base_setup',
-	'addons/product': 'server/bin/addons/product',
-	'addons/hr': 'server/bin/addons/hr',
-	'addons/board': 'server/bin/addons/board',
-	'addons/crm': 'server/bin/addons/crm',
-	'addons/account': 'server/bin/addons/account',
-	'addons/stock': 'server/bin/addons/stock',
-	'addons/purchase': 'server/bin/addons/purchase',
-	'addons/mrp': 'server/bin/addons/mrp',
-	'addons/report_mrp': 'server/bin/addons/report_mrp',
-	'addons/sale': 'server/bin/addons/sale',
-	'addons/board_manufacturing': 'server/bin/addons/board_manufacturing',
-	'addons/delivery': 'server/bin/addons/delivery',
-	'addons/profile_manufacturing': 'server/bin/addons/profile_manufacturing',
+	'addons/*': 'server/bin/addons/',
 }
+
+#bzr_links = {
+#	'addons/base_setup': 'server/bin/addons/',
+#	'addons/product': 'server/bin/addons/',
+#	'addons/hr': 'server/bin/addons/',
+#	'addons/board': 'server/bin/addons/',
+#	'addons/crm': 'server/bin/addons/',
+#	'addons/account': 'server/bin/addons/',
+#	'addons/stock': 'server/bin/addons/',
+#	'addons/purchase': 'server/bin/addons/',
+#	'addons/mrp': 'server/bin/addons/',
+#	'addons/report_mrp': 'server/bin/addons/',
+#	'addons/sale': 'server/bin/addons/',
+#	'addons/board_manufacturing': 'server/bin/addons/',
+#	'addons/delivery': 'server/bin/addons/',
+#	'addons/profile_manufacturing': 'server/bin/addons/',
+#}
 
 # ---------------------- End of Project Configuration -------------
 
@@ -45,10 +49,12 @@ for local,bzrdir in bzr_repository.items():
 		cmd.run(bzrdir, local, lightweight=True)
 	file(os.path.join(local,'.bzrignore'), 'wb+').write('*.pyc\n.svn\n.bzrignore\n')
 
-for src,dest in bzr_links.items():
-	if not os.path.isdir(dest):
-		os.symlink(os.path.realpath(src), dest)
-	for local in bzr_repository:
-		if dest.startswith(local):
-			file(os.path.join(local,'.bzrignore'), 'ab+').write(dest[len(local):]+'\n')
+for src2,dest2 in bzr_links.items():
+	for src in glob.glob(src2):
+		dest = os.path.join(dest2, os.path.basename(src))
+		if not os.path.isdir(dest):
+			os.symlink(os.path.realpath(src), dest)
+		for local in bzr_repository:
+			if dest.startswith(local):
+				file(os.path.join(local,'.bzrignore'), 'ab+').write(dest[len(local):]+'\n')
 
