@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import glob
+
 # Subscribe here repositories you plan to use for your project
 
 bzr_repository = {
