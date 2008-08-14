@@ -8,6 +8,7 @@ bzr_repository = {
 	'server': 'bzr+ssh://fp-tinyerp@bazaar.launchpad.net/~openerp/openobject-server/trunk',
 	'client': 'bzr+ssh://fp-tinyerp@bazaar.launchpad.net/~openerp/openobject-client/trunk',
 	'addons': 'bzr+ssh://fp-tinyerp@bazaar.launchpad.net/~openerp/openobject-addons/trunk',
+	'web': 'bzr+ssh://fp-tinyerp@bazaar.launchpad.net/~openerp/openobject-client-web/trunk',
 #	'addons-extra': 'bzr+ssh://fp-tinyerp@bazaar.launchpad.net/~openerp/openobject-addons/trunk-extra-addons',
 }
 
@@ -41,14 +42,17 @@ bzr_links = {
 #
 
 import os
-from bzrlib.builtins import cmd_checkout
+import optparse
+from bzrlib.builtins import cmd_checkout, cmd_branch
 
 for local,bzrdir in bzr_repository.items():
 	print 'Checkout', bzrdir
 	# TODO: improve this using a bzr call if possible
 	if not os.path.isdir(os.path.join(local,'.bzr')):
-		cmd = cmd_checkout()
-		cmd.run(bzrdir, local, lightweight=True)
+		#cmd = cmd_checkout()
+		#cmd.run(bzrdir, local, lightweight=True)
+		cmd = cmd_branch()
+		cmd.run(bzrdir, local)
 	file(os.path.join(local,'.bzrignore'), 'wb+').write('*.pyc\n.svn\n.bzrignore\n')
 
 for src2,dest2 in bzr_links.items():
