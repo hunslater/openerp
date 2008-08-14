@@ -2,6 +2,8 @@
 
 # Subscribe here repositories you plan to use for your project
 
+import glob
+
 bzr_repository = {
 	'server': 'bzr+ssh://fp-tinyerp@bazaar.launchpad.net/~openerp/openobject-server/trunk',
 	'client': 'bzr+ssh://fp-tinyerp@bazaar.launchpad.net/~openerp/openobject-client/trunk',
