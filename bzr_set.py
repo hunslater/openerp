@@ -1,27 +1,20 @@
 #!/usr/bin/python
 
-
 # Subscribe here repositories you plan to use for your project
-
 bzr_repository = {
 	'server': 'bzr+ssh://fp-tinyerp@bazaar.launchpad.net/~openerp/openobject-server/trunk',
 	'client': 'bzr+ssh://fp-tinyerp@bazaar.launchpad.net/~openerp/openobject-client/trunk',
 	'addons': 'bzr+ssh://fp-tinyerp@bazaar.launchpad.net/~openerp/openobject-addons/trunk',
 	'web': 'bzr+ssh://fp-tinyerp@bazaar.launchpad.net/~openerp/openobject-client-web/trunk',
-	'addons-extra': 'bzr+ssh://fp-tinyerp@bazaar.launchpad.net/~openerp/openobject-addons/trunk-extra-addons',
+	'addons-extra': 'bzr+ssh://fp-tinyerp@bazaar.launchpad.net/~openerp-commiter/openobject-addons/trunk-extra-addons',
 }
 
 # Subscribe here links to modules you are interrested in
-
 bzr_links = {
 	'addons/*': 'server/bin/addons/',
 }
 
 # ---------------------- End of Project Configuration -------------
-
-#
-# Note: this script could be improved to include modules dependencies detection
-#
 
 import glob
 import os
