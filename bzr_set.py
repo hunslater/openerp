@@ -55,7 +55,7 @@ for local,bzrdir in bzr_repository.items():
 	print branch and 'Branch' or 'Checkout', bzrdir, 'to' ,local
 	# TODO: improve this using a bzr call if possible
 	if not os.path.isdir(os.path.join(local,'.bzr')):
-		cmd.run(bzrdir, local, *cmd_args)
+		cmd.run(bzrdir, local, **cmd_args)
 	file(os.path.join(local,'.bzrignore'), 'wb+').write('*.pyc\n.*.swp\n.bzrignore\n')
 
 # Doing symlinks
