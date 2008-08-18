@@ -12,7 +12,7 @@ bzr_repository = {
 	'server': BASEURL + '~openerp/openobject-server/trunk',
 	'client': BASEURL + '~openerp/openobject-client/trunk',
 	'addons': BASEURL + '~openerp/openobject-addons/trunk',
-	'addons-extra': BASEURL + '~openerp/openobject-addons/trunk-extra-addons',
+	'addons-extra': BASEURL + '~openerp-commiter/openobject-addons/trunk-extra-addons',
 	'web': BASEURL + '~openerp/openobject-client-web/trunk',
 }
 
