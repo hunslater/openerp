@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 # Subscribe here repositories you plan to use for your project
-
 branch = True
 
 if branch:
@@ -13,11 +12,11 @@ bzr_repository = {
 	'server': BASEURL + '~openerp/openobject-server/trunk',
 	'client': BASEURL + '~openerp/openobject-client/trunk',
 	'addons': BASEURL + '~openerp/openobject-addons/trunk',
-#	'addons-extra': BASEURL + '~openerp/openobject-addons/trunk-extra-addons',
+	'addons-extra': BASEURL + '~openerp/openobject-addons/trunk-extra-addons',
+	'web': BASEURL + '~openerp/openobject-client-web/trunk',
 }
 
 # Subscribe here links to modules you are interrested in
-
 bzr_links = {
 	'addons/*': 'server/bin/addons/',
 }
@@ -47,6 +46,9 @@ for local,bzrdir in bzr_repository.items():
 		cmd.run(bzrdir, local, *args)
 	file(os.path.join(local,'.bzrignore'), 'wb+').write('*.pyc\n.*.swp\n.bzrignore\n')
 
+# Doing symlinks
+
+print '(Re)Computing Symbolic links...'
 for src2,dest2 in bzr_links.items():
 	for src in glob.glob(src2):
 		dest = os.path.join(dest2, os.path.basename(src))
@@ -56,3 +58,8 @@ for src2,dest2 in bzr_links.items():
 			if dest.startswith(local):
 				file(os.path.join(local,'.bzrignore'), 'ab+').write(dest[len(local):]+'\n')
 
+print
+print 'Sources of OpenERP have been installed. If you develop new features,'
+print 'you can get more information on how to contribute to the project here:'
+print '\thttp://openerp.com/'
+print
