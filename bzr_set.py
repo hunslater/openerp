@@ -61,5 +61,5 @@ for src2,dest2 in bzr_links.items():
 print
 print 'Sources of OpenERP have been installed. If you develop new features,'
 print 'you can get more information on how to contribute to the project here:'
-print '\thttp://openerp.com/'
+print '\thttp://openerp.com/community-process.html'
 print
