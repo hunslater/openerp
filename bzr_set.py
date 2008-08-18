@@ -1,7 +1,11 @@
 #!/usr/bin/python
 
+# TODO: take options on the command line : branch or checkout, version, lp login
+
 # Subscribe here repositories you plan to use for your project
 branch = True
+
+version = '4.2' # or 'trunk'
 
 if branch:
 	BASEURL = 'lp:'	
@@ -9,11 +13,11 @@ else:
 	BASEURL = 'bzr+ssh://christophe-simonis@bazaar.launchpad.net/'
 
 bzr_repository = {
-	'server': BASEURL + '~openerp/openobject-server/trunk',
-	'client': BASEURL + '~openerp/openobject-client/trunk',
-	'addons': BASEURL + '~openerp/openobject-addons/trunk',
-	'addons-extra': BASEURL + '~openerp-commiter/openobject-addons/trunk-extra-addons',
-	'web': BASEURL + '~openerp/openobject-client-web/trunk',
+	'server': BASEURL + '~openerp/openobject-server/' + version,
+	'client': BASEURL + '~openerp/openobject-client/' + version,
+	'addons': BASEURL + '~openerp/openobject-addons/' + version,
+	'addons-extra': BASEURL + '~openerp-commiter/openobject-addons/' + version + '-extra-addons',
+	'web': BASEURL + '~openerp/openobject-client-web/' + version,
 }
 
 # Subscribe here links to modules you are interrested in
