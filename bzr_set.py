@@ -7,6 +7,7 @@ import optparse
 parser = optparse.OptionParser(description="tool that allow you to get the last sources of openerp on launchpad", usage="%prog [options] [directory]")
 parser.add_option('--checkout', dest='lplogin', help="Specify the launchpad login to make a checkout instead of a branch")
 parser.add_option('-v', dest="version", default="trunk", type="choice", choices=["4.2", "trunk"], help="Specify the version to take")
+parser.add_option('--bi', dest="bi", action="store_true", default=False, help="Grab the BI if you choose the trunk version")
 
 opt, args = parser.parse_args()
 dest_dir = args and args[0] or '.'
@@ -31,6 +32,10 @@ bzr_repository = {
 bzr_links = {
 	'addons/*': 'server/bin/addons/',
 }
+
+if opt.bi and opt.version == "trunk":
+	bzr_repository['bi'] = BASEURL + '~openerp/openobject-bi/' + opt.version
+	bzr_links['bi/addons/*'] = 'server/bin/addons/'
 
 # ---------------------- End of Project Configuration -------------
 
