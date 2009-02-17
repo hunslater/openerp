@@ -3,6 +3,7 @@
 __all__ = ['update_openerp']
 
 import os
+import shutil
 import glob
 import bzrlib.builtins
 from bzrlib.plugins import launchpad
@@ -19,7 +20,7 @@ def run_cmd(cmdname, *args, **kwargs):
 
 _VERSIONS = ('4.2', '5.0', 'trunk')
 
-def update_openerp(dest_dir, version, lplogin=None, with_bi=False, verbose=False):
+def update_openerp(dest_dir, version, lplogin=None, export=False, with_bi=False, verbose=False):
     """
         if lplogin == None -> make a branch instead of a checkout
         if export == True -> bzr export 
@@ -63,23 +64,30 @@ def update_openerp(dest_dir, version, lplogin=None, with_bi=False, verbose=False
         cmd = {'new': lambda u, l: run_cmd('checkout', u, l, lightweight=True),
                'update': lambda u, l: run_cmd('update', l),
         }
+    cmd['export'] = lambda u, l: run_cmd('export', l, u)
 
-    msg = "%(status)s %(type)s %(to)s from %(from)s"
+    msg = "%(status)s %(type)s of %(from)s into %(to)s"
 
     if not os.path.exists(dest_dir):
         os.makedirs(dest_dir)
 
     for local,bzrdir in bzr_repository.items():
         local = os.path.join(dest_dir, local)
+        typ = ['checkout', 'branch'][branch]
+        if export:
+            if os.path.exists(local):
+                shutil.rmtree(local)
+            status = 'export'
+            typ = 'sources'
+        else:
+            try:
+                b = Branch.open(local)
+                # FIXME check that the current workingDirectory is a branch or a checkout
+                status = 'update'
+            except NotBranchError:
+                status = 'new'
         
-        try:
-            b = Branch.open(local)
-            # FIXME check that the current workingDirectory is a branch or a checkout
-            status = 'update'
-        except NotBranchError:
-            status = 'new'
-        
-        log(msg % {'status': status, 'type': ['checkout', 'branch'][branch], 'to': local, 'from': bzrdir})
+        log(msg % {'status': status, 'type': typ, 'to': local, 'from': bzrdir})
                 
         cmd[status](bzrdir, local)
 
@@ -103,13 +111,16 @@ def update_openerp(dest_dir, version, lplogin=None, with_bi=False, verbose=False
 if __name__ == '__main__':
     import optparse
 
-    parser = optparse.OptionParser(description="Tool that allow you to get the last sources of openerp on launchpad", usage="%prog [options] [directory]")
+    parser = optparse.OptionParser(description="Tool that allow you to get the last sources of openerp on launchpad", 
+                                   usage="%prog [options] [directory]")
     parser.add_option('--checkout', dest='lplogin', help="Specify the launchpad login to make a checkout instead of a branch")
+    parser.add_option('--export', dest='export', help='Make an export of the sources', action='store_true', default=False)
     parser.add_option('-v', dest="version", default="trunk", type="choice", choices=_VERSIONS, help="Specify the version to take")
     parser.add_option('--bi', dest="bi", action="store_true", default=False, help="Grab the BI if you choose the trunk version")
+    parser.add_option('-q', '--quiet', dest='quiet', help='Suppress the output', action='store_true', default=False)
 
     opt, args = parser.parse_args()
     dest_dir = args and args[0] or '.'
 
-    update_openerp(dest_dir, opt.version, opt.lplogin, opt.bi, True)
+    update_openerp(dest_dir, opt.version, opt.lplogin, opt.export, opt.bi, not opt.quiet)
 
