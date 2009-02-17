@@ -35,7 +35,6 @@ bzr_links = {
 
 if opt.bi and opt.version == "trunk":
     bzr_repository['bi'] = BASEURL + '~openerp/openobject-bi/' + opt.version
-    bzr_links['bi/addons/*'] = 'server/bin/addons/'
 
 # ---------------------- End of Project Configuration -------------
 
