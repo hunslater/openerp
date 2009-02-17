@@ -1,46 +1,6 @@
 #!/usr/bin/python
 
-# TODO: take options on the command line : branch or checkout, version, lp login
-
-import optparse
-
-parser = optparse.OptionParser(description="tool that allow you to get the last sources of openerp on launchpad", usage="%prog [options] [directory]")
-parser.add_option('--checkout', dest='lplogin', help="Specify the launchpad login to make a checkout instead of a branch")
-parser.add_option('-v', dest="version", default="trunk", type="choice", choices=["4.2", "trunk"], help="Specify the version to take")
-parser.add_option('--bi', dest="bi", action="store_true", default=False, help="Grab the BI if you choose the trunk version")
-
-opt, args = parser.parse_args()
-dest_dir = args and args[0] or '.'
-
-# Subscribe here repositories you plan to use for your project
-branch = opt.lplogin is None
-
-if branch:
-    BASEURL = 'lp:'    
-else:
-    BASEURL = 'bzr+ssh://%s@bazaar.launchpad.net/' % (opt.lplogin,)
-
-bzr_repository = {
-    'server': BASEURL + '~openerp/openobject-server/' + opt.version,
-    'client': BASEURL + '~openerp/openobject-client/' + opt.version,
-    'addons': BASEURL + '~openerp/openobject-addons/' + opt.version,
-    'addons-extra': BASEURL + '~openerp-commiter/openobject-addons/' + opt.version + '-extra-addons',
-    'web': BASEURL + '~openerp/openobject-client-web/' + opt.version,
-}
-
-# Subscribe here links to modules you are interrested in
-bzr_links = {
-    'addons/*': 'server/bin/addons/',
-}
-
-if opt.bi and opt.version == "trunk":
-    bzr_repository['bi'] = BASEURL + '~openerp/openobject-bi/' + opt.version
-
-# ---------------------- End of Project Configuration -------------
-
-#
-# Note: this script could be improved to include modules dependencies detection
-#
+__all__ = ['update_openerp']
 
 import os
 import glob
@@ -57,51 +17,99 @@ def run_cmd(cmdname, *args, **kwargs):
         f._setup_outf()
     return f.run(*args, **kwargs)
 
-if branch:
-    cmd = {'new': lambda u, l: run_cmd('branch', u, l),
-           'update': lambda u, l: run_cmd('pull', u, directory=l, overwrite=True),
+_VERSIONS = ('4.2', '5.0', 'trunk')
+
+def update_openerp(dest_dir, version, lplogin=None, with_bi=False, verbose=False):
+    """
+        if lplogin == None -> make a branch instead of a checkout
+        if export == True -> bzr export 
+    """
+    def log(msg):
+        if verbose:
+            print msg
+
+    if version not in _VERSIONS:
+        raise Exception('Unknown version')
+    dest_dir = dest_dir or '.'
+    with_bi = with_bi and version == 'trunk'
+
+    branch = lplogin is None
+    if branch:
+        BASEURL = 'lp:'    
+    else:
+        BASEURL = 'bzr+ssh://%s@bazaar.launchpad.net/' % (lplogin,)
+
+    bzr_repository = {
+        'server': BASEURL + '~openerp/openobject-server/' + version,
+        'client': BASEURL + '~openerp/openobject-client/' + version,
+        'addons': BASEURL + '~openerp/openobject-addons/' + version,
+        'addons-extra': BASEURL + '~openerp-commiter/openobject-addons/' + version + '-extra-addons',
+        'web': BASEURL + '~openerp/openobject-client-web/' + version,
     }
-else:
-    cmd = {'new': lambda u, l: run_cmd('checkout', u, l, lightweight=True),
-           'update': lambda u, l: run_cmd('update', l),
+
+    bzr_links = {
+        'addons/*': 'server/bin/addons/',
     }
 
-msg = "%(status)s %(type)s %(to)s from %(from)s"
+    if with_bi:
+        bzr_repository['bi'] = BASEURL + '~openerp/openobject-bi/' + version
 
-if not os.path.exists(dest_dir):
-    os.makedirs(dest_dir)
 
-for local,bzrdir in bzr_repository.items():
-    local = os.path.join(dest_dir, local)
-    
-    try:
-        Branch.open(local)
-        # FIXME check that the current workingDirectory is a branch or a checkout
-        status = 'update'
-    except NotBranchError:
-        status = 'new'
-    
-    print msg % {'status': status, 'type': ['checkout', 'branch'][branch], 'to': local, 'from': bzrdir}
-            
-    cmd[status](bzrdir, local)
+    if branch:
+        cmd = {'new': lambda u, l: run_cmd('branch', u, l),
+               'update': lambda u, l: run_cmd('pull', u, directory=l, overwrite=True),
+        }
+    else:
+        cmd = {'new': lambda u, l: run_cmd('checkout', u, l, lightweight=True),
+               'update': lambda u, l: run_cmd('update', l),
+        }
 
-# Doing symlinks
+    msg = "%(status)s %(type)s %(to)s from %(from)s"
 
-print '(Re)Computing Symbolic links...'
-for src2,dest2 in bzr_links.items():
-    src2 = os.path.join(dest_dir, src2)
-    dest2 = os.path.join(dest_dir, dest2)
-    for src in glob.glob(src2):
-        dest = os.path.join(dest2, os.path.basename(src))
-        if not os.path.isdir(dest):
-            os.symlink(os.path.realpath(src), dest)
-        for local in bzr_repository:
-            if dest.startswith(local):
-                file(os.path.join(local,'.bzrignore'), 'ab+').write(dest[len(local):]+'\n')
+    if not os.path.exists(dest_dir):
+        os.makedirs(dest_dir)
 
-print
-print 'Sources of OpenERP have been installed. If you develop new features,'
-print 'you can get more information on how to contribute to the project here:'
-print '\thttp://openerp.com/community-process.html'
-print
+    for local,bzrdir in bzr_repository.items():
+        local = os.path.join(dest_dir, local)
+        
+        try:
+            b = Branch.open(local)
+            # FIXME check that the current workingDirectory is a branch or a checkout
+            status = 'update'
+        except NotBranchError:
+            status = 'new'
+        
+        log(msg % {'status': status, 'type': ['checkout', 'branch'][branch], 'to': local, 'from': bzrdir})
+                
+        cmd[status](bzrdir, local)
+
+    # Doing symlinks
+    log('(Re)Computing Symbolic links...')
+    for src2,dest2 in bzr_links.items():
+        src2 = os.path.join(dest_dir, src2)
+        dest2 = os.path.join(dest_dir, dest2)
+        for src in glob.glob(src2):
+            dest = os.path.join(dest2, os.path.basename(src))
+            if not os.path.isdir(dest):
+                os.symlink(os.path.realpath(src), dest)
+
+    log('='*79)
+    log('Sources of OpenERP have been installed. If you develop new features,')
+    log('you can get more information on how to contribute to the project here:')
+    log('\thttp://openerp.com/community-process.html')
+    log('='*79)
+
+
+if __name__ == '__main__':
+    import optparse
+
+    parser = optparse.OptionParser(description="Tool that allow you to get the last sources of openerp on launchpad", usage="%prog [options] [directory]")
+    parser.add_option('--checkout', dest='lplogin', help="Specify the launchpad login to make a checkout instead of a branch")
+    parser.add_option('-v', dest="version", default="trunk", type="choice", choices=_VERSIONS, help="Specify the version to take")
+    parser.add_option('--bi', dest="bi", action="store_true", default=False, help="Grab the BI if you choose the trunk version")
+
+    opt, args = parser.parse_args()
+    dest_dir = args and args[0] or '.'
+
+    update_openerp(dest_dir, opt.version, opt.lplogin, opt.bi, True)
 
