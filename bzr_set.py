@@ -47,6 +47,7 @@ def update_openerp(dest_dir, version='trunk', lplogin=None, export=False, verbos
         'client': BASEURL + '~openerp/openobject-client/' + version,
         'addons': BASEURL + '~openerp/openobject-addons/' + version,
         'addons-extra': BASEURL + '~openerp-commiter/openobject-addons/' + extraversion + '-extra-addons',
+        'addons-community': BASEURL + '~openerp-commiter/openobject-addons/' + extraversion + '-addons-community',
         'web': BASEURL + '~openerp/openobject-client-web/' + version,
     }
 
