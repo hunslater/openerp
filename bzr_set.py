@@ -9,6 +9,7 @@ import bzrlib.builtins
 from bzrlib.plugins import launchpad
 from bzrlib.branch import Branch
 from bzrlib.errors import NotBranchError
+from bzrlib.revisionspec import RevisionSpec
 
 def run_cmd(cmdname, *args, **kwargs):
     f = getattr(bzrlib.builtins, 'cmd_' + cmdname)()
@@ -19,11 +20,15 @@ def run_cmd(cmdname, *args, **kwargs):
     return f.run(*args, **kwargs)
 
 _VERSIONS = ('4.2', '5.0', 'trunk')
+_DEFAULT_VERSION = '5.0'
 
-def update_openerp(dest_dir, version='trunk', lplogin=None, export=False, verbose=False):
+def update_openerp(dest_dir, version=_DEFAULT_VERSION, lplogin=None, export=False, revision=None, verbose=False):
     """
         if lplogin == None -> make a branch instead of a checkout
         if export == True -> bzr export 
+        if revision is provided, get the branches at this revision
+            more information with:
+                $> bzr help revisionspec
     """
     def log(msg):
         if verbose:
@@ -56,14 +61,14 @@ def update_openerp(dest_dir, version='trunk', lplogin=None, export=False, verbos
     }
 
     if branch:
-        cmd = {'new': lambda u, l: run_cmd('branch', u, l),
-               'update': lambda u, l: run_cmd('pull', u, directory=l, overwrite=True),
+        cmd = {'new': lambda u, l, r: run_cmd('branch', u, l, revision=r),
+               'update': lambda u, l, r: run_cmd('pull', u, directory=l, overwrite=True, revision=r),
         }
     else:
-        cmd = {'new': lambda u, l: run_cmd('checkout', u, l, lightweight=True),
-               'update': lambda u, l: run_cmd('update', l),
+        cmd = {'new': lambda u, l, r: run_cmd('checkout', u, l, lightweight=True, revision=r),
+               'update': lambda u, l, r: run_cmd('update', l), # no revision option :(
         }
-    cmd['export'] = lambda u, l: run_cmd('export', l, u)
+    cmd['export'] = lambda u, l, r: run_cmd('export', l, u, revision=r)
 
     msg = "%(status)s %(type)s of %(from)s into %(to)s"
 
@@ -86,9 +91,15 @@ def update_openerp(dest_dir, version='trunk', lplogin=None, export=False, verbos
             except NotBranchError:
                 status = 'new'
         
-        log(msg % {'status': status, 'type': typ, 'to': local, 'from': bzrdir})
+        frm = bzrdir
+        rev = None
+        if revision:
+            frm = '%s (%s)' % (bzrdir, revision)
+            rev = RevisionSpec.from_string(revision)
+
+        log(msg % {'status': status, 'type': typ, 'to': local, 'from': frm})
                 
-        cmd[status](bzrdir, local)
+        cmd[status](bzrdir, local, rev and [rev] or None)
 
     # Doing symlinks
     log('(Re)Computing Symbolic links...')
@@ -114,11 +125,12 @@ if __name__ == '__main__':
                                    usage="%prog [options] [directory]")
     parser.add_option('--checkout', dest='lplogin', help="Specify the launchpad login to make a checkout instead of a branch")
     parser.add_option('--export', dest='export', help='Make an export of the sources', action='store_true', default=False)
-    parser.add_option('-v', dest="version", default="trunk", type="choice", choices=_VERSIONS, help="Specify the version to take")
+    parser.add_option('-v', dest="version", default=_DEFAULT_VERSION, type="choice", choices=_VERSIONS, help="Specify the version to take")
+    parser.add_option('-r', dest="revision", default=None, help="Specify the revision to take. (usefull to take a specific TAG or to specify a DATE)")
     parser.add_option('-q', '--quiet', dest='quiet', help='Suppress the output', action='store_true', default=False)
 
     opt, args = parser.parse_args()
     dest_dir = args and args[0] or '.'
 
-    update_openerp(dest_dir, opt.version, opt.lplogin, opt.export, not opt.quiet)
+    update_openerp(dest_dir, opt.version, opt.lplogin, opt.export, opt.revision, not opt.quiet)
 
