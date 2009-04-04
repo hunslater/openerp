@@ -52,7 +52,7 @@ def update_openerp(dest_dir, version=_DEFAULT_VERSION, lplogin=None, export=Fals
         'client': BASEURL + '~openerp/openobject-client/' + version,
         'addons': BASEURL + '~openerp/openobject-addons/' + version,
         'addons-extra': BASEURL + '~openerp-commiter/openobject-addons/' + extraversion + '-extra-addons',
-        'addons-community': BASEURL + '~openerp-commiter/openobject-addons/' + extraversion + '-addons-community',
+        'addons-community': BASEURL + '~openerp-community/openobject-addons/' + extraversion + '-addons-community',
         'web': BASEURL + '~openerp/openobject-client-web/' + version,
     }
 
