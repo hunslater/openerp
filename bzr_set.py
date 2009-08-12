@@ -46,14 +46,15 @@ def update_openerp(dest_dir, version=_DEFAULT_VERSION, lplogin=None, export=Fals
 
     # for now, there is no 5.0-extra-addons -> use trunk instead
     extraversion = version == '5.0' and 'trunk' or version  
+    webversion = version == '5.0' and '5.0.2' or version  
 
     bzr_repository = {
-        'server': BASEURL + '~openerp/openobject-server/' + version,
-        'client': BASEURL + '~openerp/openobject-client/' + version,
-        'addons': BASEURL + '~openerp/openobject-addons/' + version,
-        'addons-extra': BASEURL + '~openerp-commiter/openobject-addons/' + extraversion + '-extra-addons',
-        'addons-community': BASEURL + '~openerp-community/openobject-addons/' + extraversion + '-addons-community',
-        'web': BASEURL + '~openerp/openobject-client-web/' + version,
+        'server': (BASEURL + '~openerp/openobject-server/' + version, True),
+        'client': (BASEURL + '~openerp/openobject-client/' + version, True),
+        'addons': (BASEURL + '~openerp/openobject-addons/' + version, True),
+        'addons-extra': (BASEURL + '~openerp-commiter/openobject-addons/' + extraversion + '-extra-addons', False),
+        'addons-community': (BASEURL + '~openerp-community/openobject-addons/' + extraversion + '-addons-community', False),
+        'web': (BASEURL + '~openerp/openobject-client-web/' + webversion, True),
     }
 
     bzr_links = {
@@ -75,7 +76,7 @@ def update_openerp(dest_dir, version=_DEFAULT_VERSION, lplogin=None, export=Fals
     if not os.path.exists(dest_dir):
         os.makedirs(dest_dir)
 
-    for local,bzrdir in bzr_repository.items():
+    for local, (bzrdir, has_tags) in bzr_repository.items():
         local = os.path.join(dest_dir, local)
         typ = ['checkout', 'branch'][branch]
         if export:
@@ -93,7 +94,7 @@ def update_openerp(dest_dir, version=_DEFAULT_VERSION, lplogin=None, export=Fals
         
         frm = bzrdir
         rev = None
-        if revision:
+        if revision and (not revision.startswith('tag:') or has_tags):
             frm = '%s (%s)' % (bzrdir, revision)
             rev = RevisionSpec.from_string(revision)
 
