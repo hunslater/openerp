@@ -118,10 +118,12 @@ def update_openerp(dest_dir, version=_DEFAULT_VERSION, lplogin=None, export=Fals
     log('\thttp://openerp.com/community-process.html')
     log('='*79)
 
+#
+# Testing bzr send
+#
 
 if __name__ == '__main__':
     import optparse
-
     parser = optparse.OptionParser(description="Tool that allow you to get the last sources of openerp on launchpad", 
                                    usage="%prog [options] [directory]")
     parser.add_option('--checkout', dest='lplogin', help="Specify the launchpad login to make a checkout instead of a branch")
@@ -129,9 +131,7 @@ if __name__ == '__main__':
     parser.add_option('-v', dest="version", default=_DEFAULT_VERSION, type="choice", choices=_VERSIONS, help="Specify the version to take")
     parser.add_option('-r', dest="revision", default=None, help="Specify the revision to take. (usefull to take a specific TAG or to specify a DATE)")
     parser.add_option('-q', '--quiet', dest='quiet', help='Suppress the output', action='store_true', default=False)
-
     opt, args = parser.parse_args()
     dest_dir = args and args[0] or '.'
-
     update_openerp(dest_dir, opt.version, opt.lplogin, opt.export, opt.revision, not opt.quiet)
 
