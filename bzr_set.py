@@ -45,7 +45,8 @@ def update_openerp(dest_dir, version=_DEFAULT_VERSION, lplogin=None, export=Fals
         BASEURL = 'bzr+ssh://%s@bazaar.launchpad.net/' % (lplogin,)
 
     # for now, there is no 5.0-extra-addons -> use trunk instead
-    extraversion = version == '5.0' and 'trunk' or version  
+    extraversion = version == '5.0' and 'stable_5.0' or version
+    communityversion = version == '5.0' and 'trunk' or version  
     webversion = version == '5.0' and '5.0.2' or version  
 
     bzr_repository = {
@@ -53,7 +54,7 @@ def update_openerp(dest_dir, version=_DEFAULT_VERSION, lplogin=None, export=Fals
         'client': (BASEURL + '~openerp/openobject-client/' + version, True),
         'addons': (BASEURL + '~openerp/openobject-addons/' + version, True),
         'addons-extra': (BASEURL + '~openerp-commiter/openobject-addons/' + extraversion + '-extra-addons', False),
-        'addons-community': (BASEURL + '~openerp-community/openobject-addons/' + extraversion + '-addons-community', False),
+        'addons-community': (BASEURL + '~openerp-community/openobject-addons/' + communityversion + '-addons-community', False),
         'web': (BASEURL + '~openerp/openobject-client-web/' + webversion, True),
     }
 
