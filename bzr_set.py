@@ -47,7 +47,7 @@ def update_openerp(dest_dir, version=_DEFAULT_VERSION, lplogin=None, export=Fals
     # for now, there is no 5.0-extra-addons -> use trunk instead
     extraversion = version == '5.0' and 'stable_5.0' or version
     communityversion = version == '5.0' and 'trunk' or version  
-    webversion = version == '5.0' and '5.0.2' or version  
+    webversion = version == '5.0' and '5.0' or version  
 
     bzr_repository = {
         'server': (BASEURL + '~openerp/openobject-server/' + version, True),
