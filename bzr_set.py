@@ -125,11 +125,15 @@ def update_openerp(dest_dir, version=_DEFAULT_VERSION, lplogin=None, export=Fals
 
 if __name__ == '__main__':
     import optparse
-    parser = optparse.OptionParser(description="Tool that allow you to get the last sources of openerp on launchpad", 
+    description = """Tool that allows you to get the last sources of openerp on launchpad.
+It downloads all branches, and create symlinks for addons in the server. By
+default, it loads the latest stable version.
+"""
+    parser = optparse.OptionParser(description=description, 
                                    usage="%prog [options] [directory]")
     parser.add_option('--checkout', dest='lplogin', help="Specify the launchpad login to make a checkout instead of a branch")
-    parser.add_option('--export', dest='export', help='Make an export of the sources', action='store_true', default=False)
-    parser.add_option('-v', dest="version", default=_DEFAULT_VERSION, type="choice", choices=_VERSIONS, help="Specify the version to take")
+    parser.add_option('--export', dest='export', help='Make an export of the sources, instead of branches', action='store_true', default=False)
+    parser.add_option('-v', dest="version", default=_DEFAULT_VERSION, type="choice", choices=_VERSIONS, help="Specify the version to take (trunk, 4.2, 5.0)")
     parser.add_option('-r', dest="revision", default=None, help="Specify the revision to take. (usefull to take a specific TAG or to specify a DATE)")
     parser.add_option('-q', '--quiet', dest='quiet', help='Suppress the output', action='store_true', default=False)
     opt, args = parser.parse_args()
