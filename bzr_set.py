@@ -116,7 +116,7 @@ def update_openerp(dest_dir, version=_DEFAULT_VERSION, lplogin=None, export=Fals
     log('='*79)
     log('Sources of OpenERP have been installed. If you develop new features,')
     log('you can get more information on how to contribute to the project here:')
-    log('\thttp://openerp.com/community-process.html')
+    log('\thttp://test.openobject.com')
     log('='*79)
 
 #
