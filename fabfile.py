@@ -142,6 +142,6 @@ def make_all():
     update()
     update_release_files()
     sdist()
-    update_current()
-    #upload()
+    windows()
+    upload()
 
