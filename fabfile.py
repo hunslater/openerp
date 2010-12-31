@@ -64,7 +64,7 @@ def update():
             system(['bzr','branch',i[1],i[0]])
         else:
             system(['bzr','pull','-d',i[0],i[1]])
-    system("cd addons; bzr revert -r 4148")
+        #system(['bzr','revert','-d',i[0],'-r','tag:%s'%VERSION_FULL])
     system("rsync -av --delete --exclude .bzr/ --exclude .bzrignore --exclude /__init__.py --exclude /base --exclude /base_quality_interrogation.py addons/ server/bin/addons/")
 
 def update_release_files():
