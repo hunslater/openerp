@@ -9,7 +9,7 @@ from fabric.operations import put
 VERSION_MAJOR='6.0'
 VERSION_FULL='%s.0-rc2'%VERSION_MAJOR
 
-WINDOWS_IP='172.16.225.128'
+WINDOWS_IP='Stef@172.16.225.128'
 
 # This should not be updated
 
@@ -38,6 +38,7 @@ DIR_SOURCE = os.path.join(DIR_WEBSITE, 'unstable', 'source')
 DIR_WIN32 = os.path.join(DIR_WEBSITE, 'unstable', 'win32')
 
 env.hosts = ['root@openerp.com']
+env.show = ['debug']
 
 def system(l):
     print l
@@ -91,6 +92,11 @@ def update_current():
     Update the local CURRENT file with the new version
     """
     local('echo %s > %s' % (VERSION_FULL, os.path.join(DIR_DIST, 'CURRENT')))
+
+def windows():
+    system('rsync -av --delete --exclude .bzr/ --exclude .bzrignore ./ %s:openerp-packaging/'%WINDOWS_IP)
+    system('ssh %s "cd openerp-packaging/windows-installer;make allinone;"'%WINDOWS_IP)
+    system('rsync -av %s:openerp-packaging/windows-installer/files/ %s/ '%(WINDOWS_IP,DIR_DIST))
 
 def upload_tar():
     """
