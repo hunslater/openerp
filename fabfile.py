@@ -6,8 +6,13 @@ from fabric.operations import put
 
 # This should be updated every release
 
-VERSION_MAJOR='6.0'
-VERSION_FULL='%s.0-rc2'%VERSION_MAJOR
+VERSION_MAJOR=6
+VERSION_MINOR=0
+VERSION_REVISION=0
+VERSION_BUILD='rc2'
+VERSION_FULL='%s.%s.%s'%(VERSION_MAJOR,VERSION_MINOR,VERSION_REVISION)
+if VERSION_BUILD:
+    VERSION_FULL='%s-%s'%(VERSION_FULL,VERSION_BUILD)
 
 WINDOWS_IP='Stef@172.16.225.128'
 
@@ -66,6 +71,12 @@ def update_release_files():
     """
     Update the release files
     """
+    open('windows-installer/Makefile.version','w').write("""
+MAJOR_VERSION=%(VERSION_MAJOR)s
+MINOR_VERSION=%(VERSION_MINOR)s
+REVISION_VERSION=%(VERSION_REVISION)s
+BUILD_VERSION=%(VERSION_BUILD)s
+"""%globals())
     from mako.template import Template as MakoTemplate
     for project in PROJECTS:
         release_file = os.path.join(os.path.abspath(project[1]), project[2])
@@ -73,7 +84,7 @@ def update_release_files():
 
         template = MakoTemplate(filename=template_file)
         file_pointer = open(release_file, 'w')
-        file_pointer.write( template.render(VERSION=VERSION_FULL, MAJOR_VERSION=VERSION_MAJOR))
+        file_pointer.write( template.render(VERSION=VERSION_FULL, MAJOR_VERSION='%s.%s'%(VERSION_MAJOR,VERSION_MINOR)))
         file_pointer.close()
         print "release_file: %r" % release_file
 
