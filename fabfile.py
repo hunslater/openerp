@@ -105,9 +105,10 @@ def update_current():
     local('echo %s > %s' % (VERSION_FULL, os.path.join(DIR_DIST, 'CURRENT')))
 
 def windows():
-    system('rsync -av --delete --exclude .bzr/ --exclude .bzrignore ./ %s:openerp-packaging/'%WINDOWS_IP)
-    system('ssh %s "cd openerp-packaging/windows-installer;make allinone;"'%WINDOWS_IP)
-    system('rsync -av %s:openerp-packaging/windows-installer/files/ %s/ '%(WINDOWS_IP,DIR_DIST))
+    #system('rsync -av --delete --exclude .bzr/ --exclude .bzrignore ./ %s:openerp-packaging/'%WINDOWS_IP)
+    #system('ssh %s "cd openerp-packaging/windows-installer;make allinone;"'%WINDOWS_IP)
+    #system('rsync -av %s:openerp-packaging/windows-installer/files/ %s/ '%(WINDOWS_IP,DIR_DIST))
+    system('rsync -av %s:openerp-packaging/windows-installer/openerp-setup-%s.exe %s/openerp-setup-%s.exe'%(WINDOWS_IP,VERSION_FULL,DIR_DIST,VERSION_FULL))
 
 def upload_tar():
     """
