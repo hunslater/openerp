@@ -123,7 +123,7 @@ def update_current():
     """
     Update the CURRENT file with the new version
     """
-    run('echo %s > %s' % (VERSION, os.path.join(DIR_WEBSITE, 'CURRENT')))
+    run('echo %s > %s' % (VERSION_FULL, os.path.join(DIR_WEBSITE, 'CURRENT')))
     run('chown www-data:www-data %s -R' % DIR_WEBSITE)
 
 def upload():
