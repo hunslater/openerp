@@ -36,7 +36,7 @@ if not os.path.exists(DIR_DIST):
     os.mkdir(DIST_DIR)
 
 GLOB_TARBALL = 'openerp-*-%s.tar.gz' % VERSION_FULL
-GLOB_WIN32 = 'openerp-*-setup-%s.exe' % VERSION_FULL
+GLOB_WIN32 = 'openerp-*setup-%s.exe' % VERSION_FULL
 
 DIR_WEBSITE = os.path.join('/', 'var', 'www', 'www.openerp.com', 'www', 'download')
 DIR_SOURCE = os.path.join(DIR_WEBSITE, 'unstable', 'source')
@@ -87,6 +87,7 @@ BUILD_VERSION=%(VERSION_BUILD)s
         file_pointer.write( template.render(VERSION=VERSION_FULL, MAJOR_VERSION='%s.%s'%(VERSION_MAJOR,VERSION_MINOR)))
         file_pointer.close()
         print "release_file: %r" % release_file
+    local('echo %s > %s' % (VERSION_FULL, os.path.join(DIR_DIST, 'CURRENT')))
 
 def sdist():
     """
@@ -97,12 +98,6 @@ def sdist():
         cmd=['python', os.path.join(directory, 'setup.py'), 'sdist', '-d', os.path.abspath(DIR_DIST)]
         print cmd
         subprocess.Popen(cmd, cwd=directory).communicate()
-
-def update_current():
-    """
-    Update the local CURRENT file with the new version
-    """
-    local('echo %s > %s' % (VERSION_FULL, os.path.join(DIR_DIST, 'CURRENT')))
 
 def windows():
     system('rsync -av --delete --exclude .bzr/ --exclude .bzrignore --exclude /packaging/ ./ %s:openerp-packaging/'%WINDOWS_IP)
@@ -124,13 +119,20 @@ def upload_win32():
     run('mkdir %s -p' % DIR_WIN32)
     put(os.path.join(DIR_DIST, GLOB_WIN32), DIR_WIN32)
 
+def update_current():
+    """
+    Update the CURRENT file with the new version
+    """
+    run('echo %s > %s' % (VERSION, os.path.join(DIR_WEBSITE, 'CURRENT')))
+    run('chown www-data:www-data %s -R' % DIR_WEBSITE)
+
 def upload():
     """
     Upload the Windows Installer and the tarballs
     """
-    update_current()
     upload_tar()
     upload_win32()
+    update_current()
 
 def update_planets():
     """
