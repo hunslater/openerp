@@ -1,30 +1,17 @@
 #!/usr/bin/env python
-from __future__ import with_statement
-
-import os
-import imp
-import tempfile
-import shutil
+import imp, os, shutil, subprocess, tempfile
 
 from fabric.api import env, run, local, cd
 from fabric.operations import put
 
-MAJOR_VERSION=6
-MINOR_VERSION=0
-REVISION_VERSION=0
-BUILD_VERSION='rc2'
+# This should be updated every release
 
-VERSION='%d.%d.%d' % (MAJOR_VERSION, MINOR_VERSION, REVISION_VERSION)
-if BUILD_VERSION:
-    VERSION='%s-%s' % (VERSION, BUILD_VERSION,)
+VERSION_MAJOR='6.0'
+VERSION_FULL='%s.0-rc2'%VERSION_MAJOR
 
-SDIST_DIR = os.path.realpath('packaging')
-if not os.path.exists(SDIST_DIR):
-    print "The packaging directory doesn't exist - create it or change the directory in the fabfile"
-    sys.exit()
-TARBALL_PATTERN = 'openerp-*-%s.tar.gz' % VERSION
-EXE_WIN32_PATTERN = 'openerp-*-setup-%s.exe' % VERSION
-WORKING_DIRECTORY = os.getcwd()
+WINDOWS_IP='172.16.225.128'
+
+# This should not be updated
 
 PROJECTS = [
     ('openobject-server', 'server', os.path.join('bin', 'release.py'), 'server_release.py.mako'),
@@ -32,22 +19,18 @@ PROJECTS = [
     ('openobject-web', 'web', os.path.join('openobject', 'release.py'), 'web_release.py.mako'),
 ]
 
+DIR_DIST = os.path.realpath('packaging')
+if not os.path.exists(DIR_DIST):
+    os.mkdir(DIST_DIR)
 
-DOWNLOAD_DIRECTORY = os.path.join('/', 'var', 'www', 'www.openerp.com', 'www', 'download')
-REMOTE_DIRECTORY = os.path.join(DOWNLOAD_DIRECTORY, 'unstable')
-SOURCE_DIRECTORY = os.path.join(REMOTE_DIRECTORY, 'source')
-WIN32_DIRECTORY = os.path.join(REMOTE_DIRECTORY, 'win32')
+GLOB_TARBALL = 'openerp-*-%s.tar.gz' % VERSION_FULL
+GLOB_WIN32 = 'openerp-*-setup-%s.exe' % VERSION_FULL
+
+DIR_WEBSITE = os.path.join('/', 'var', 'www', 'www.openerp.com', 'www', 'download')
+DIR_SOURCE = os.path.join(DIR_WEBSITE, 'unstable', 'source')
+DIR_WIN32 = os.path.join(DIR_WEBSITE, 'unstable', 'win32')
 
 env.hosts = ['root@openerp.com']
-
-def show_version():
-    """
-    Make the version defined in this file and the release.py files
-    """
-    print "CURRENT: %r" % (VERSION)
-    for project, project_directory, release_file, _ in PROJECTS:
-        release = imp.load_source(release_file, os.path.join(project_directory, release_file))
-        print "project: %r -- %r" % (project, release.version)
 
 def update():
     """
@@ -64,45 +47,11 @@ def update():
         bzr pull -d client;
         bzr pull -d server;
         bzr pull -d web;
-        rsync --exclude .bzr/ -av addons/ server/bin/addons/
+        #rsync --exclude .bzr/ -av addons/ server/bin/addons/
     """
     for i in cmd.split('\n'):
         print i
         os.system(i)
-
-def sdist():
-    """
-    Generate the sources
-    """
-    from subprocess import Popen, call
-    for project in PROJECTS:
-        project_name = project[0]
-        project_directory = project[1]
-
-        directory = os.path.abspath(project_directory)
-        print "project: %s - %s" % (project_name, directory,)
-        Popen(['python', os.path.join(directory, 'setup.py'), 'sdist', '-d', os.path.abspath(SDIST_DIR)],
-              cwd=directory).communicate()
-
-def upload_tar():
-    """
-    Upload the tarballs (source)
-    """
-    run('mkdir %s -p' % SOURCE_DIRECTORY)
-    put(os.path.join(SDIST_DIR, TARBALL_PATTERN), SOURCE_DIRECTORY)
-
-def upload_win32():
-    """
-    Upload the Windows Installers
-    """
-    run('mkdir %s -p' % WIN32_DIRECTORY)
-    put(os.path.join(SDIST_DIR, EXE_WIN32_PATTERN), WIN32_DIRECTORY)
-
-def update_local_current():
-    """
-    Update the local CURRENT file with the new version
-    """
-    local('echo %s > %s' % (VERSION, os.path.join(SDIST_DIR, 'CURRENT')))
 
 def update_release_files():
     """
@@ -116,27 +65,48 @@ def update_release_files():
         template = MakoTemplate(filename=template_file)
         file_pointer = open(release_file, 'w')
         file_pointer.write(
-            template.render(VERSION=VERSION,
-                            MAJOR_VERSION='%d.%d' % (MAJOR_VERSION, MINOR_VERSION)
-                           )
+            template.render(VERSION_FULL=VERSION_FULL, VERSION_MAJOR)
         )
         file_pointer.close()
         print "release_file: %r" % release_file
 
+def sdist():
+    """
+    Generate the sources
+    """
+    for project in PROJECTS:
+        directory = os.path.abspath(project[1])
+        cmd=['python', os.path.join(directory, 'setup.py'), 'sdist', '-d', os.path.abspath(DIR_DIST)]
+        print cmd
+        subprocess.Popen(cmd, cwd=directory).communicate()
+
 def update_current():
     """
-    Update the CURRENT file with the new version
+    Update the local CURRENT file with the new version
     """
-    run('echo %s > %s' % (VERSION, os.path.join(DOWNLOAD_DIRECTORY, 'CURRENT')))
-    run('chown www-data:www-data %s -R' % DOWNLOAD_DIRECTORY)
+    local('echo %s > %s' % (VERSION_FULL, os.path.join(DIR_DIST, 'CURRENT')))
+
+def upload_tar():
+    """
+    Upload the tarballs (source)
+    """
+    run('mkdir %s -p' % DIR_SOURCE)
+    put(os.path.join(DIR_DIST, GLOB_TARBALL), DIR_SOURCE)
+
+def upload_win32():
+    """
+    Upload the Windows Installers
+    """
+    run('mkdir %s -p' % DIR_WIN32)
+    put(os.path.join(DIR_DIST, GLOB_WIN32), DIR_WIN32)
 
 def upload():
     """
     Upload the Windows Installer and the tarballs
     """
+    update_current()
     upload_tar()
     upload_win32()
-    update_current()
 
 def update_planets():
     """
@@ -149,7 +119,6 @@ def make_all():
     update()
     update_release_files()
     sdist()
-    update_local_current()
     update_current()
     #upload()
 
