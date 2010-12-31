@@ -13,6 +13,13 @@ WINDOWS_IP='172.16.225.128'
 
 # This should not be updated
 
+BRANCHES = [
+    ('addons','bzr+ssh://bazaar.launchpad.net/~openerp/openobject-addons/trunk'),
+    ('client','bzr+ssh://bazaar.launchpad.net/~openerp/openobject-client/trunk'),
+    ('server','bzr+ssh://bazaar.launchpad.net/~openerp/openobject-server/trunk'),
+    ('web','bzr+ssh://bazaar.launchpad.net/~openerp/openobject-client-web/trunk'),
+]
+
 PROJECTS = [
     ('openobject-server', 'server', os.path.join('bin', 'release.py'), 'server_release.py.mako'),
     ('openobject-client', 'client', os.path.join('bin', 'release.py'), 'client_release.py.mako'),
@@ -32,26 +39,27 @@ DIR_WIN32 = os.path.join(DIR_WEBSITE, 'unstable', 'win32')
 
 env.hosts = ['root@openerp.com']
 
+def system(l):
+    print l
+    if isinstance(l,list):
+        rc=os.spawnvp(os.P_WAIT, l[0], l)
+    elif isinstance(l,str):
+        tmp=['sh','-c',l]
+        rc=os.spawnvp(os.P_WAIT, tmp[0], tmp)
+    return rc
+
 def update():
     """
     Make bzr pull on each branch
     """
-    cmd="""
-        #[ -d .bzr ] || bzr init-repository .;
-        [ -d addons ] || time bzr branch bzr+ssh://bazaar.launchpad.net/~openerp/openobject-addons/trunk addons;
-        [ -d client ] || time bzr branch bzr+ssh://bazaar.launchpad.net/~openerp/openobject-client/trunk client;
-        [ -d server ] || time bzr branch bzr+ssh://bazaar.launchpad.net/~openerp/openobject-server/trunk server;
-        [ -d web ] || time bzr branch bzr+ssh://bazaar.launchpad.net/~openerp/openobject-client-web/trunk web;
-        bzr pull -d addons;
-        cd addons; bzr revert -r 4148; cd ..
-        bzr pull -d client;
-        bzr pull -d server;
-        bzr pull -d web;
-        #rsync --exclude .bzr/ -av addons/ server/bin/addons/
-    """
-    for i in cmd.split('\n'):
-        print i
-        os.system(i)
+    #system("[ -d .bzr ] || bzr init-repository .")
+    for i in BRANCHES:
+        if not os.path.isdir(i[0]):
+            system(['bzr','branch',i[1],i[0]])
+        else:
+            system(['bzr','pull','-d',i[0],i[1]])
+    system("cd addons; bzr revert -r 4148")
+    system("rsync -av --delete --exclude .bzr/ --exclude .bzrignore --exclude /__init__.py --exclude /base --exclude /base_quality_interrogation.py addons/ server/bin/addons/")
 
 def update_release_files():
     """
@@ -64,9 +72,7 @@ def update_release_files():
 
         template = MakoTemplate(filename=template_file)
         file_pointer = open(release_file, 'w')
-        file_pointer.write(
-            template.render(VERSION_FULL=VERSION_FULL, VERSION_MAJOR)
-        )
+        file_pointer.write( template.render(VERSION=VERSION_FULL, MAJOR_VERSION=VERSION_MAJOR))
         file_pointer.close()
         print "release_file: %r" % release_file
 
