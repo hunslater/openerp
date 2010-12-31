@@ -3,3 +3,4 @@ server
 web
 client
 packaging/*
+windows-installer/Makefile.version
