@@ -63,3 +63,5 @@ standalone:	client server web
 
 allinone:	standalone
 	$(LAUNCH_MAKENSIS)
+	cp ./openerp-*.exe $(FILES_DIRECTORY)
+

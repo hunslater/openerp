@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import imp, os, shutil, subprocess, tempfile
+import imp, os, shutil, subprocess, tempfile, time
 
 from fabric.api import env, run, local, cd
 from fabric.operations import put
@@ -10,11 +10,10 @@ VERSION_MAJOR=6
 VERSION_MINOR=0
 VERSION_REVISION=0
 VERSION_BUILD='rc2'
+VERSION_BUILD=time.strftime("%Y%m%d.%H%m")
 VERSION_FULL='%s.%s.%s'%(VERSION_MAJOR,VERSION_MINOR,VERSION_REVISION)
 if VERSION_BUILD:
     VERSION_FULL='%s-%s'%(VERSION_FULL,VERSION_BUILD)
-
-WINDOWS_IP='Stef@172.16.225.128'
 
 # This should not be updated
 
@@ -55,9 +54,7 @@ def system(l):
     return rc
 
 def update():
-    """
-    Make bzr pull on each branch
-    """
+    """ Make bzr pull on each branch """
     #system("[ -d .bzr ] || bzr init-repository .")
     for i in BRANCHES:
         if not os.path.isdir(i[0]):
@@ -68,15 +65,8 @@ def update():
     system("rsync -av --delete --exclude .bzr/ --exclude .bzrignore --exclude /__init__.py --exclude /base --exclude /base_quality_interrogation.py addons/ server/bin/addons/")
 
 def update_release_files():
-    """
-    Update the release files
-    """
-    open('windows-installer/Makefile.version','w').write("""
-MAJOR_VERSION=%(VERSION_MAJOR)s
-MINOR_VERSION=%(VERSION_MINOR)s
-REVISION_VERSION=%(VERSION_REVISION)s
-BUILD_VERSION=%(VERSION_BUILD)s
-"""%globals())
+    """ Update the release files """
+    open('windows-installer/Makefile.version','w').write("""MAJOR_VERSION=%(VERSION_MAJOR)s\nMINOR_VERSION=%(VERSION_MINOR)s\nREVISION_VERSION=%(VERSION_REVISION)s\nBUILD_VERSION=%(VERSION_BUILD)s"""%globals())
     from mako.template import Template as MakoTemplate
     for project in PROJECTS:
         release_file = os.path.join(os.path.abspath(project[1]), project[2])
@@ -90,54 +80,54 @@ BUILD_VERSION=%(VERSION_BUILD)s
     local('echo %s > %s' % (VERSION_FULL, os.path.join(DIR_DIST, 'CURRENT')))
 
 def sdist():
-    """
-    Generate the sources
-    """
+    """ Generate the sources """
     for project in PROJECTS:
         directory = os.path.abspath(project[1])
         cmd=['python', os.path.join(directory, 'setup.py'), 'sdist', '-d', os.path.abspath(DIR_DIST)]
         print cmd
         subprocess.Popen(cmd, cwd=directory).communicate()
 
-def windows():
-    system('rsync -av --delete --exclude .bzr/ --exclude .bzrignore --exclude /packaging/ ./ %s:openerp-packaging/'%WINDOWS_IP)
-    system('ssh %s "cd openerp-packaging/windows-installer;make allinone;"'%WINDOWS_IP)
-    system('rsync -av %s:openerp-packaging/windows-installer/files/ %s/ '%(WINDOWS_IP,DIR_DIST))
-    system('rsync -av %s:openerp-packaging/windows-installer/openerp-setup-%s.exe %s/openerp-setup-%s.exe'%(WINDOWS_IP,VERSION_FULL,DIR_DIST,VERSION_FULL))
+def windows_build(ip,port):
+    system('rsync -av -e "ssh -p %s" --delete --exclude .bzr/ --exclude .bzrignore --exclude /packaging/ ./ %s:openerp-packaging/'%(port,ip))
+    system('ssh -p %s %s "cd openerp-packaging/windows-installer;time make allinone;"'%(port,ip))
+    system('rsync -av -e "ssh -p %s" %s:openerp-packaging/windows-installer/files/ %s/ '%(port,ip,DIR_DIST))
+
+def windows_vmare():
+    windows_build('Stef@172.16.225.128','22')
+
+def windows_kvm():
+    l="kvm -vnc 127.0.0.1:1 -net nic -net user,hostfwd=tcp:127.0.0.1:2222-:22 -snapshot /home/bak/windowxpvm_kvm/winxpsp3_openerp.vmdk".split(" ")
+    print l
+    pid=os.spawnvp(os.P_NOWAIT, l[0], l)
+    print "sleep 240"
+    time.sleep(240)
+    windows_build('Stef@127.0.0.1','2222')
+    print "kill",pid
+    os.kill(pid,15)
 
 def upload_tar():
-    """
-    Upload the tarballs (source)
-    """
+    """ Upload the tarballs (source) """
     run('mkdir %s -p' % DIR_SOURCE)
     put(os.path.join(DIR_DIST, GLOB_TARBALL), DIR_SOURCE)
 
 def upload_win32():
-    """
-    Upload the Windows Installers
-    """
+    """ Upload the Windows Installers """
     run('mkdir %s -p' % DIR_WIN32)
     put(os.path.join(DIR_DIST, GLOB_WIN32), DIR_WIN32)
 
 def update_current():
-    """
-    Update the CURRENT file with the new version
-    """
+    """ Update the CURRENT file with the new version """
     run('echo %s > %s' % (VERSION_FULL, os.path.join(DIR_WEBSITE, 'CURRENT')))
     run('chown www-data:www-data %s -R' % DIR_WEBSITE)
 
 def upload():
-    """
-    Upload the Windows Installer and the tarballs
-    """
+    """ Upload the Windows Installer and the tarballs """
     upload_tar()
     upload_win32()
     update_current()
 
 def update_planets():
-    """
-    Update the planets (openerp, openobject)
-    """
+    """ Update the planets (openerp, openobject) """
     run('/var/www/www.openerp.com/planet/upd-planet.sh')
     run('/var/www/www.openobject.com/planet/upd-planet.sh')
 
@@ -145,6 +135,13 @@ def make_all():
     update()
     update_release_files()
     sdist()
-    windows()
+    windows_kvm()
     upload()
+
+def daily():
+    update()
+    update_release_files()
+    sdist()
+    windows_kvm()
+
 

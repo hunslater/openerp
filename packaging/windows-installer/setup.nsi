@@ -99,7 +99,7 @@
 
 Name '${DISPLAY_NAME}'
 Caption "${PRODUCT_NAME} ${VERSION} Setup"
-OutFile "openerp-setup-${VERSION}.exe"
+OutFile "openerp-allinone-setup-${VERSION}.exe"
 #SetCompressor /final /solid lzma
 #SetCompress auto
 ShowInstDetails show

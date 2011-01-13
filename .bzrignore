@@ -1,0 +1,6 @@
+packaging/addons
+packaging/server
+packaging/web
+packaging/client
+packaging/packaging/*
+packaging/windows-installer/Makefile.version
