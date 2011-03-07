@@ -19,8 +19,14 @@ def run_cmd(cmdname, *args, **kwargs):
         f._setup_outf()
     return f.run(*args, **kwargs)
 
-_VERSIONS = ('4.2', '5.0', 'trunk')
-_DEFAULT_VERSION = '5.0'
+_VERSIONS = ('4.2', '5.0', '6.0', 'trunk')
+_DEFAULT_VERSION = '6.0'
+_EXTRA_ADDONS_MAP = {
+    '4.2': '4.2-extra-addons',
+    '5.0': 'stable_5.0-extra-addons',
+    '6.0': 'extra-6.0',
+    'trunk': 'trunk-extra-addons',
+}
 
 def update_openerp(dest_dir, version=_DEFAULT_VERSION, lplogin=None, export=False, revision=None, verbose=False):
     """
@@ -44,16 +50,16 @@ def update_openerp(dest_dir, version=_DEFAULT_VERSION, lplogin=None, export=Fals
     else:
         BASEURL = 'bzr+ssh://%s@bazaar.launchpad.net/' % (lplogin,)
 
-    # for now, there is no 5.0-extra-addons -> use trunk instead
-    extraversion = version == '5.0' and 'stable_5.0' or version
-    communityversion = version == '5.0' and 'trunk' or version  
-    webversion = version == '5.0' and '5.0' or version  
+    # map branch URLs according to version
+    extraversion = _EXTRA_ADDONS_MAP[version]
+    communityversion = 'trunk'
+    webversion = version
 
     bzr_repository = {
         'server': (BASEURL + '~openerp/openobject-server/' + version, True),
         'client': (BASEURL + '~openerp/openobject-client/' + version, True),
         'addons': (BASEURL + '~openerp/openobject-addons/' + version, True),
-        'addons-extra': (BASEURL + '~openerp-commiter/openobject-addons/' + extraversion + '-extra-addons', False),
+        'addons-extra': (BASEURL + '~openerp-commiter/openobject-addons/' + extraversion, False),
         'addons-community': (BASEURL + '~openerp-community/openobject-addons/' + communityversion + '-addons-community', False),
         'web': (BASEURL + '~openerp/openobject-client-web/' + webversion, True),
     }
@@ -133,8 +139,8 @@ default, it loads the latest stable version.
                                    usage="%prog [options] [directory]")
     parser.add_option('--checkout', dest='lplogin', help="Specify the launchpad login to make a checkout instead of a branch")
     parser.add_option('--export', dest='export', help='Make an export of the sources, instead of branches', action='store_true', default=False)
-    parser.add_option('-v', dest="version", default=_DEFAULT_VERSION, type="choice", choices=_VERSIONS, help="Specify the version to take (trunk, 4.2, 5.0)")
-    parser.add_option('-r', dest="revision", default=None, help="Specify the revision to take. (usefull to take a specific TAG or to specify a DATE)")
+    parser.add_option('-v', dest="version", default=_DEFAULT_VERSION, type="choice", choices=_VERSIONS, help="Specify the version to take (trunk, 4.2, 5.0, 6.0)")
+    parser.add_option('-r', dest="revision", default=None, help="Specify the revision to take. (useful to take a specific TAG or to specify a DATE)")
     parser.add_option('-q', '--quiet', dest='quiet', help='Suppress the output', action='store_true', default=False)
     opt, args = parser.parse_args()
     dest_dir = args and args[0] or '.'
